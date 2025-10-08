@@ -35,3 +35,18 @@ func NewStore(
 		Closer: closer,
 	}
 }
+
+func NewLockingStore(
+	stores map[types.StoreKey]types.CacheWrapper,
+	traceWriter io.Writer, traceContext types.TraceContext,
+	closer io.Closer,
+) Store {
+	if closer == nil {
+		closer = NoopCloser
+	}
+	store := cachemulti.NewLockingStore(nil, stores, nil, traceWriter, traceContext)
+	return Store{
+		Store:  store,
+		Closer: closer,
+	}
+}
