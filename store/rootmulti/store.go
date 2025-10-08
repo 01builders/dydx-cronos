@@ -198,6 +198,23 @@ func (rs *Store) CacheMultiStore() types.CacheMultiStore {
 }
 
 // Implements interface MultiStore
+func (rs *Store) LockingCacheMultiStore() types.CacheMultiStore {
+	stores := make(map[types.StoreKey]types.CacheWrapper)
+	for k, v := range rs.stores {
+		store := types.CacheWrapper(v)
+		if kv, ok := store.(types.KVStore); ok {
+			// Wire the listenkv.Store to allow listeners to observe the writes from the cache store,
+			// set same listeners on cache store will observe duplicated writes.
+			if rs.ListeningEnabled(k) {
+				store = listenkv.NewStore(kv, k, rs.listeners[k])
+			}
+		}
+		stores[k] = store
+	}
+	return cachemulti.NewLockingStore(stores, nil, nil, nil)
+}
+
+// CacheMultiStoreWithVersion Implements interface MultiStore
 // used to createQueryContext, abci_query or grpc query service.
 func (rs *Store) CacheMultiStoreWithVersion(version int64) (types.CacheMultiStore, error) {
 	if version == 0 || (rs.lastCommitInfo != nil && version == rs.lastCommitInfo.Version) {
