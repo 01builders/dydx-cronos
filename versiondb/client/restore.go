@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"io"
-	"math"
 	"path/filepath"
 	"strconv"
 
@@ -103,9 +102,8 @@ loop:
 			if storeKey == "" {
 				return errors.Wrap(err, "invalid protobuf message, store name is empty")
 			}
-			if item.IAVL.Height > math.MaxInt8 {
-				return fmt.Errorf("node height %v cannot exceed %v",
-					item.IAVL.Height, math.MaxInt8)
+			if item.IAVL.Height > 0 {
+				continue
 			}
 			ch <- versiondb.ImportEntry{
 				StoreKey: storeKey,
